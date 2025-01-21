@@ -40,7 +40,8 @@ Out_Data <- read_xlsx(str_glue("10yrOWQIRawData_{WaterYear}.xlsx"))
 
 ### Pull data from AWQMS database
 Raw_Data <- AWQMS_Data(startdate = Start_Date, enddate = End_Date, 
-  project = 'Surface Water Ambient Monitoring', Char_Name = c('temperature, water',
+  project = 'Surface Water Ambient Monitoring', 
+  Char_Name = c('temperature, water',
           'dissolved oxygen (DO)','dissolved oxygen saturation',
           'biochemical oxygen demand, non-standard conditions','pH','total solids',
           'Ammonia', 'Nitrate + Nitrite','Total phosphorus, mixed forms','Conductivity',
