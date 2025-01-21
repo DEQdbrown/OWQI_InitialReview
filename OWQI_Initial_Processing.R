@@ -26,13 +26,14 @@ options(scipen = 999)
 setwd("//deqlab1/WQM/OWQI/R/Final/InitialDataProcessing")
 
 ### Set the data window by changing these dates each new water year 
-Start_Date <- '2022-10-01' 
-End_Date <- '2023-09-30'
-WaterYear <- 2023
+Start_Date <- '2023-10-01' 
+End_Date <- '2024-09-30'
+WaterYear <- 2024
+LastWaterYear <- 2023
 
 
 ### Pull in outlier data for later use ###
-Out_Data <- read_xlsx(str_glue("10yrOWQIRawData_{WaterYear}.xlsx"))
+Out_Data <- read_xlsx(str_glue("10yrOWQIRawData_{LastWaterYear}.xlsx"))
 
 #===============================================================================
 # Initial Data Pull and Organization -------------------------------------------
