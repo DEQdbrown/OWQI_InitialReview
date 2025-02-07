@@ -202,6 +202,9 @@ OutlierData <- Out_Data %>%
 ### corrected, then proceed to the next step.                                ###
 ################################################################################
 
+#### Estuary sites have not yet been removed from the dataset. There may be high cond and TS values in outliers.
+#### Check line 290 to see which sites are estuary 
+
 pH_check <- OWQIData4Review %>%
   filter(pHf != -8888, pHf < OutlierData$pH_1 | pHf > OutlierData$pH_99) %>%
   select(Station, ElementID, date, pHf, ph)
@@ -246,7 +249,7 @@ Ecoli_check <- OWQIData4Review %>%
   filter(Ecoli != -8888, Ecoli < OutlierData$Ecoli_1 | Ecoli > OutlierData$Ecoli_99) %>%
   select(Station, ElementID, date, Ecoli)
 
-stop("Check each check dataframe for outliers. See comment box above for details. Start again on line 264.")
+stop("Check each check dataframe for outliers. See comment box above for details. Start again on line 272.")
 
 #===============================================================================
 # Mark Data for Exclusion ------------------------------------------------------
@@ -264,6 +267,8 @@ stop("Check each check dataframe for outliers. See comment box above for details
 ################################################################################
 
 ### Mark any samples with voided results for exclusion
+
+## Note to Dan and Kat 1.2025- Add something into code to remove rows that are not legitimate NAs ###
 OWQIData4Review <- OWQIData4Review %>%
   mutate(UseNOWQI = if_else(str_detect(pHf, "-8888") & is.na(ph), "false", UseNOWQI),
          UseNOWQI = if_else(str_detect(condf, "-8888") & is.na(cond), "false", UseNOWQI),
@@ -274,12 +279,12 @@ OWQIData4Review <- OWQIData4Review %>%
 NA_check <- OWQIData4Review %>%
   filter(if_any(c(pHf, condf,NH3:Tempf), ~ is.na(.)), is.na(Exclusion))
 
-stop("Check the NA_check table for missing data. See comment box above for details. Start again on line 277.")
+stop("Check the NA_check table for missing data. See comment box above for details. Start again on line 285.")
 
 # Based on the NA_check table, mark samples for exclusion. If no data is missing, skip this snippet.
 OWQIData4Review <- OWQIData4Review %>%
   mutate(UseNOWQI = 
-            if_else(ElementID %in% c("2308240-05-GS", "2308240-06-GS"), "false", UseNOWQI), # The ElementIDs in this line are for example only  
+            if_else(ElementID %in% c("2311078-01-GS", "2311078-02-GS","2311078-03-GS","2311078-04-GS","2311078-05-GS","2311078-06-GS","2311078-07-GS","2311078-08-GS","2311078-09-GS","2311006-01-GS","2311006-02-GS","2311006-03-GS"), "false", UseNOWQI), # The ElementIDs in this line are for example only  
          Exclusion = if_else(str_detect(UseNOWQI, "false") & is.na(Exclusion), "Missing Data", Exclusion))
 
 ### Mark any high conductivity results from estuary sites for exclusion 
@@ -293,9 +298,9 @@ OWQIData4Review <- OWQIData4Review %>%
 ################################################################################
 ### Compare primary and duplicate samples. If there's an error with the      ###
 ### primary sample, then the duplicate can potentially be used instead. Run  ###
-### lines 305-311 after entering the ElementID(s) of the duplicates that     ###
-### need to be used in the analysis in line 307. After running lines 305-311 ###
-### or if no replacements are necessary, then run lines 313-318.             ###
+### lines 312-318 after entering the ElementID(s) of the duplicates that     ###
+### need to be used in the analysis in line 320. After running lines 312-318 ###
+### or if no replacements are necessary, then run lines 320-325.             ###
 ################################################################################
 
 FPFD <- OWQIData4Review %>%
@@ -306,7 +311,7 @@ stop("Check the FPFD table to determine if duplicate should be used instead of p
 
 OWQIData4Review <- OWQIData4Review %>%
   mutate(UseNOWQI = case_when(
-    ElementID %in% c("1703089-08-FD", "1708102-07-FD") ~ "True", # The ElementIDs in this line are for example only # 
+    ElementID %in% c("2407259-10-FD") ~ "True", # The ElementIDs in this line are for example only # 
     str_detect(ElementID, "FP") & is.na(UseNOWQI) ~ "True",
     str_detect(ElementID, "FD") ~ "false",
     TRUE ~ UseNOWQI),
@@ -323,7 +328,7 @@ OWQIData4Review <- OWQIData4Review %>%
 FindFalse <- OWQIData4Review %>%
   filter(UseNOWQI == "false")
 
-stop("Check the FindFalse table to ensure everything looks good, then proceed from line 326.")
+stop("Check the FindFalse table to ensure everything looks good, then proceed from line 334.")
 
 ### Once all the checks are complete, errors have been fixed, etc., then mark the remaining results for use in the OWQI
 FinalOWQIData4Review <- OWQIData4Review %>%
@@ -344,9 +349,9 @@ stop("Check for the current year's data in the RawData_SQL table, then proceed f
 
 ################################################################################
 ### Check if the current year data is in the RawData_SQL table. If the data  ###
-### is there but needs updated, then run lines 348 and 349 to delete the     ###
+### is there but needs updated, then run lines 357 and 358 to delete the     ###
 ### existing data and save the new dataset. If there is no data for the      ###
-### current water year in the RawData_SQL table, then run line 349 only.     ###
+### current water year in the RawData_SQL table, then run line 359 only.     ###
 ################################################################################
 
 sqlQuery(repo.sql, str_glue("DELETE FROM OWQIRawData WHERE date >= '{Start_Date}'"))
@@ -378,7 +383,10 @@ Full_Data <- Full_Data %>%
 write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA.csv"))
 
 ### Prepare last 10 years of data for use in outlier calculation
-### Pre-WY2023 data has DQLs concatenated with the results which need to be removed
+### Pre-WY2023 data has DQLs concatenated with the results in SQL database which need to be removed. 
+### Post-WY2023 data is not concatenated with the results.
+### No need to update this code with the last water year.
+
 Pre23_Data <- Hist_Data %>%
   mutate(date = as.Date(date)) %>%
   filter(UseNOWQI != 'false',
@@ -436,7 +444,7 @@ ExcludedData <- FindFalse %>%
 write.xlsx(ExcludedData, str_glue("ExcludedData_{WaterYear}"))
 
 # Create and export file of why data was voided
-ExludeReason <- Raw_Data %>%
+ExcludeReason <- Raw_Data %>%
   filter(DQL %in% c("C","D","E")) %>%
   select(MLocID, Activity_Type, SampleStartDate, Char_Name, Char_Speciation, 
          Sample_Fraction, Result_status, Result_Text, Result_Unit, Activity_Comment, 
@@ -486,3 +494,5 @@ bar <- ggplot(PercComp, aes(x = Char_Name, y = ratio, fill = threshold)) +
   scale_fill_manual(values = c("Above" = "steelblue", "Below" = "orange"))
 
 ggsave("Parameter_Completeness.png", plot = bar, width = 10, height = 6, dpi = 300)
+
+save.image(file = str_glue("OWQI_WY{WaterYear}.RData"))
