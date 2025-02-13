@@ -419,7 +419,7 @@ Post23_Data <- Hist_Data %>%
   filter(UseNOWQI != 'false',
          date >= "2022-10-01") %>%
   mutate(across(pHf:Tempf, as.double),
-         pHf = if_else(pHf == "-8888D"|is.na(pHf)|str_detect(pHf, "C"), ph, pHf),
+         pHf = if_else(pHf == "-8888"|is.na(pHf)|str_detect(pHf, "C"), ph, pHf),
          condf = if_else(condf == "-8888"|is.na(condf)|str_detect(condf, "C"), cond, condf)) %>%
   select(-ph, -cond)
 
@@ -459,7 +459,7 @@ stations <- query_stations() %>%
    mutate(Date = format(as.Date(Date), "%m/%d/%Y"))
  
  ### Write file that will be used in scoring scripts
- write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA2.csv"))
+ write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA.csv"))
  
 #===============================================================================
 # Assessing Sample Completeness ------------------------------------------------
