@@ -358,14 +358,16 @@ sqlQuery(repo.sql, str_glue("DELETE FROM OWQIRawData WHERE date >= '{Start_Date}
 sqlSave(repo.sql, FinalOWQIData4Review, tablename = "OWQIRawData", append = TRUE, rownames = FALSE)
 
 ### Pull data for OWQI score calculation
-Full_Data <- sqlFetch(repo.sql, 'vOWQIdata')
+# Full_Data <- sqlFetch(repo.sql, 'vOWQIdata') # View strips last digit off the results, so don't use
+PreWY2015_Data <- sqlFetch(repo.sql, 'OWQIHistorical')
 
 ### Pull data for next year's outlier calculations and close SQL connection
 Hist_Data <- sqlFetch(repo.sql, 'OWQIRawData')
 close(repo.sql)
 
-#write.xlsx(Hist_Data, str_glue("10yrOWQIRawData_{WaterYear}.xlsx"), rownames = FALSE)
-write.xlsx(Hist_Data, "RawForEdit.xlsx", rownames = FALSE)
+##### I don't think either of these exports are necessary
+#write.xlsx(Hist_Data, str_glue("10yrOWQIRawData_{WaterYear}.xlsx"), rownames = FALSE)  
+#write.xlsx(Hist_Data, "RawForEdit.xlsx", rownames = FALSE)
 
 ### Pull station information from the Stations database
 stations <- query_stations() %>%
@@ -374,13 +376,15 @@ stations <- query_stations() %>%
   select(Station, StationDes, OWRD_Basin)
 
 ### Add Station Description and Basin Name
-Full_Data <- Full_Data %>%
-  left_join(stations, by = c("Station")) %>% 
-  relocate(c(StationDes, OWRD_Basin), .before = Date) %>%
-  select(-ElementID)
+# Full_Data <- Full_Data %>%
+#   left_join(stations, by = c("Station")) %>% 
+#   relocate(c(StationDes, OWRD_Basin), .before = Date) %>%
+#   rename('combo_name' = StationDes, 'OWQI_basin' = OWRD_Basin) %>%
+#   mutate(Date = as.Date(Date))
+#   select(-ElementID)
 
 ### Write file that will be used in scoring scripts
-write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA.csv"))
+write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA2.csv"))
 
 ### Prepare last 10 years of data for use in outlier calculation
 ### Pre-WY2023 data has DQLs concatenated with the results in SQL database which need to be removed. 
@@ -423,7 +427,40 @@ Post23_Data <- Hist_Data %>%
 Data4Outlier <- rbind(Pre23_Data, Post23_Data)
 
 write.xlsx(Data4Outlier, str_glue("10yrOWQIRawData_{WaterYear}.xlsx"))     
-         
+
+### Clean data from OWQIHistoric SQL pull
+Early_Data <- PreWY2015_Data %>%
+  filter(AnalysisCode != 'E') %>%
+  select(-Time, -AnalysisCode)
+
+### Clean data originally pulled from OWQIRawData SQL pull
+Recent_Data <- Data4Outlier %>%
+  rename('Date' = date,  'temp' = Tempf, 'do_sat' = DOSf, 'bod' = BOD, 'ph' = pHf, 
+         'ts' = TS, 'nh3' = NH3, 'no2' = NIT, 'p' = P, 'ecoli' = Ecoli, 'd_o' = DOf) %>%
+  relocate(c(temp, d_o, do_sat, bod), .before = ph) %>%
+  relocate(c(ts, nh3, no2, p), .before = ecoli) %>%
+  mutate('fecal' = NA) %>%
+  select(-condf, -UseNOWQI, -ElementID)
+
+### Combine datasets
+Combined_Data <- rbind(Early_Data, Recent_Data)
+ 
+### Pull station information from the Stations database
+stations <- query_stations() %>%
+  filter(OrgID == 'OregonDEQ') %>%
+  rename(Station = 'station_key') %>%
+  select(Station, StationDes, OWRD_Basin)
+
+### Add Station Description and Basin Name
+ Full_Data <- Combined_Data %>%
+   left_join(stations, by = c("Station")) %>% 
+   relocate(c(StationDes, OWRD_Basin), .before = Date) %>%
+   rename('combo_name' = StationDes, 'OWQI_basin' = OWRD_Basin) %>%
+   mutate(Date = format(as.Date(Date), "%m/%d/%Y"))
+ 
+ ### Write file that will be used in scoring scripts
+ write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA2.csv"))
+ 
 #===============================================================================
 # Assessing Sample Completeness ------------------------------------------------
 #===============================================================================
