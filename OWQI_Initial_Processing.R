@@ -370,10 +370,10 @@ close(repo.sql)
 #write.xlsx(Hist_Data, "RawForEdit.xlsx", rownames = FALSE)
 
 ### Pull station information from the Stations database
-stations <- query_stations() %>%
-  filter(OrgID == 'OregonDEQ') %>%
-  rename(Station = 'station_key') %>%
-  select(Station, StationDes, OWRD_Basin)
+# stations <- query_stations() %>%
+#   filter(OrgID == 'OregonDEQ') %>%
+#   rename(Station = 'station_key') %>%
+#   select(Station, StationDes, OWRD_Basin)
 
 ### Add Station Description and Basin Name
 # Full_Data <- Full_Data %>%
@@ -456,7 +456,7 @@ stations <- query_stations() %>%
    left_join(stations, by = c("Station")) %>% 
    relocate(c(StationDes, OWRD_Basin), .before = Date) %>%
    rename('combo_name' = StationDes, 'OWQI_basin' = OWRD_Basin) %>%
-   mutate(Date = format(as.Date(Date), "%m/%d/%Y"))
+   mutate(Date = as.Date(Date))
  
  ### Write file that will be used in scoring scripts
  write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA.csv"))
