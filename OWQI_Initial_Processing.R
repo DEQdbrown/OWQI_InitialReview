@@ -284,7 +284,7 @@ stop("Check the NA_check table for missing data. See comment box above for detai
 # Based on the NA_check table, mark samples for exclusion. If no data is missing, skip this snippet.
 OWQIData4Review <- OWQIData4Review %>%
   mutate(UseNOWQI = 
-            if_else(ElementID %in% c("2311078-01-GS", "2311078-02-GS","2311078-03-GS","2311078-04-GS","2311078-05-GS","2311078-06-GS","2311078-07-GS","2311078-08-GS","2311078-09-GS","2311006-01-GS","2311006-02-GS","2311006-03-GS"), "false", UseNOWQI), # The ElementIDs in this line are for example only  
+            if_else(ElementID %in% c("2311078-01-GS", "2311078-02-GS","2311078-03-GS","2311078-04-GS","2311078-05-GS","2311078-06-GS","2311078-07-GS","2311078-08-GS","2311078-09-GS","2311006-01-GS","2311006-02-GS","2311006-03-GS","2409057-06-GS"), "false", UseNOWQI), # The ElementIDs in this line are for example only  
          Exclusion = if_else(str_detect(UseNOWQI, "false") & is.na(Exclusion), "Missing Data", Exclusion))
 
 ### Mark any high conductivity results from estuary sites for exclusion 
