@@ -365,31 +365,10 @@ PreWY2015_Data <- sqlFetch(repo.sql, 'OWQIHistorical')
 Hist_Data <- sqlFetch(repo.sql, 'OWQIRawData')
 close(repo.sql)
 
-##### I don't think either of these exports are necessary
-#write.xlsx(Hist_Data, str_glue("10yrOWQIRawData_{WaterYear}.xlsx"), rownames = FALSE)  
-#write.xlsx(Hist_Data, "RawForEdit.xlsx", rownames = FALSE)
-
-### Pull station information from the Stations database
-# stations <- query_stations() %>%
-#   filter(OrgID == 'OregonDEQ') %>%
-#   rename(Station = 'station_key') %>%
-#   select(Station, StationDes, OWRD_Basin)
-
-### Add Station Description and Basin Name
-# Full_Data <- Full_Data %>%
-#   left_join(stations, by = c("Station")) %>% 
-#   relocate(c(StationDes, OWRD_Basin), .before = Date) %>%
-#   rename('combo_name' = StationDes, 'OWQI_basin' = OWRD_Basin) %>%
-#   mutate(Date = as.Date(Date))
-#   select(-ElementID)
-
-### Write file that will be used in scoring scripts
-write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA2.csv"))
-
 ### Prepare last 10 years of data for use in outlier calculation
-### Pre-WY2023 data has DQLs concatenated with the results in SQL database which need to be removed. 
-### Post-WY2023 data is not concatenated with the results.
-### No need to update this code with the last water year.
+# Pre-WY2023 data has DQLs concatenated with the results in SQL database which need to be removed. 
+# Post-WY2023 data is not concatenated with the results.
+# No need to update this code with the last water year.
 
 Pre23_Data <- Hist_Data %>%
   mutate(date = as.Date(date)) %>%
@@ -428,6 +407,7 @@ Data4Outlier <- rbind(Pre23_Data, Post23_Data)
 
 write.xlsx(Data4Outlier, str_glue("10yrOWQIRawData_{WaterYear}.xlsx"))     
 
+### Prepare last 10 years of data for OWQI calculation
 ### Clean data from OWQIHistoric SQL pull
 Early_Data <- PreWY2015_Data %>%
   filter(AnalysisCode != 'E') %>%
@@ -454,10 +434,19 @@ stations <- query_stations() %>%
 ### Add Station Description and Basin Name
  Full_Data <- Combined_Data %>%
    left_join(stations, by = c("Station")) %>% 
-   relocate(c(StationDes, OWRD_Basin), .before = Date) %>%
-   rename('combo_name' = StationDes, 'OWQI_basin' = OWRD_Basin) %>%
-   mutate(Date = as.Date(Date))
- 
+   rename('combo_name' = StationDes) %>%
+   mutate(Date = as.Date(Date),
+          OWQI_basin = case_when(
+            OWRD_Basin %in% c('Willamette','Columbia River','Sandy','Hood') ~ 'Will_Sand_Hood',
+            OWRD_Basin %in% c('Mid Coast', 'South Coast', 'North Coast') ~ 'Coast Range',
+            OWRD_Basin %in% c('Umatilla', 'Grande Ronde', 'John Day') ~ 'JD_Umat_GR_Crook',
+            OWRD_Basin %in% c('Malheur', 'Powder', 'Owyhee', 'Goose & Summer Lakes', 'Malheur Lake') ~ 'Pow_Bur_Mal_Owy',
+            OWRD_Basin == 'Deschutes' & str_detect(StationDes, 'Crooked River') ~ 'JD_Umat_GR_Crook',
+            TRUE ~ OWRD_Basin)
+          ) %>%
+   select(-OWRD_Basin) %>%
+   relocate(c(StationDes, OWQI_basin), .before = Date) 
+  
  ### Write file that will be used in scoring scripts
  write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA.csv"))
  
