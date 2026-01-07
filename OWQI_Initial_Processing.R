@@ -26,10 +26,10 @@ options(scipen = 999)
 setwd("//deqlab1/WQM/OWQI/R/Final/InitialDataProcessing")
 
 ### Set the data window by changing these dates each new water year 
-Start_Date <- '2023-10-01' 
-End_Date <- '2024-09-30'
-WaterYear <- 2024
-LastWaterYear <- 2023
+Start_Date <- '2024-10-01' 
+End_Date <- '2025-09-30'
+WaterYear <- 2025
+LastWaterYear <- 2024
 
 
 ### Pull in outlier data for later use ###
