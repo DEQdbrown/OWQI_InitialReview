@@ -284,7 +284,9 @@ stop("Check the NA_check table for missing data. See comment box above for detai
 # Based on the NA_check table, mark samples for exclusion. If no data is missing, skip this snippet.
 OWQIData4Review <- OWQIData4Review %>%
   mutate(UseNOWQI = 
-            if_else(ElementID %in% c("2311078-01-GS", "2311078-02-GS","2311078-03-GS","2311078-04-GS","2311078-05-GS","2311078-06-GS","2311078-07-GS","2311078-08-GS","2311078-09-GS","2311006-01-GS","2311006-02-GS","2311006-03-GS","2409057-06-GS"), "false", UseNOWQI), # The ElementIDs in this line are for example only  
+            if_else(ElementID %in% c("2507137-02-GS","25037-02-GS","2506044-05-GS","2508260-01-GS","2506044-03-FP","2506044-06FD","2509293-04-GS","2507137-01-GS","2506044-04-GS","2506044-01-GS","2508183-01-GS","2507146-05-GS","2507146-06-GS","2506044-02-GS","2509243-08-GS",
+                                     "2509243-05-GS","2509243-06-GS","2507268-05-GS","2507268-06-GS","2507268-01-GS","2507268-02-GS","2507268-04-GS","2507268-10-GS","2411033-07-GS","2411033-04-GS","2509243-02-GS","2507268-11-GS","2411033-08-GS","2411033-06-GS","2411033-05-GS","2509243-03-GS","2411033-10-GS","2411033-09-GS",
+                                     "2507268-07-GS","2509243-01-GS","2507268-03-GS","2507268-12-FD","2507268-08-FP"), "false", UseNOWQI), # The ElementIDs in this line are for example only  
          Exclusion = if_else(str_detect(UseNOWQI, "false") & is.na(Exclusion), "Missing Data", Exclusion))
 
 ### Mark any high conductivity results from estuary sites for exclusion 
@@ -311,7 +313,7 @@ stop("Check the FPFD table to determine if duplicate should be used instead of p
 
 OWQIData4Review <- OWQIData4Review %>%
   mutate(UseNOWQI = case_when(
-    ElementID %in% c("2407259-10-FD") ~ "True", # The ElementIDs in this line are for example only # 
+    ElementID %in% c("2508105-07-FD") ~ "True", # The ElementIDs in this line are for example only # 
     str_detect(ElementID, "FP") & is.na(UseNOWQI) ~ "True",
     str_detect(ElementID, "FD") ~ "false",
     TRUE ~ UseNOWQI),
@@ -424,17 +426,24 @@ Recent_Data <- Data4Outlier %>%
 
 ### Combine datasets
 Combined_Data <- rbind(Early_Data, Recent_Data)
+
+## Make sure that Station column is a character, or else join in line 446 will not work. Also, add "-ORDEQ" suffix to Stations. ## 1.14.26 KM
+
+Combined_Data$Station <- paste0(as.character(Combined_Data$Station), "-ORDEQ")
+
+## Check
+
  
 ### Pull station information from the Stations database
 stations <- query_stations() %>%
-  filter(OrgID == 'OregonDEQ') %>%
-  rename(Station = 'station_key') %>%
+  filter(orgid == 'OREGONDEQ') %>%
+  rename(Station = 'MLocID') %>%
   select(Station, StationDes, OWRD_Basin)
 
 ### Add Station Description and Basin Name
  Full_Data <- Combined_Data %>%
    left_join(stations, by = c("Station")) %>% 
-   rename('combo_name' = StationDes) %>%
+   #rename('combo_name' = StationDes) %>%               ##This renaming to combo_name was creating issues. StationDes is referenced later in script. This might be older code? KM 1.14.26
    mutate(Date = as.Date(Date),
           OWQI_basin = case_when(
             OWRD_Basin %in% c('Willamette','Columbia River','Sandy','Hood') ~ 'Will_Sand_Hood',
@@ -446,6 +455,9 @@ stations <- query_stations() %>%
           ) %>%
    select(-OWRD_Basin) %>%
    relocate(c(StationDes, OWQI_basin), .before = Date) 
+ 
+ # Remove -ORDEQ suffix after combining with stations, if needed
+ ## Full_Data$Station <- sub("-ORDEQ$", "", Combined_Data$Station)
   
  ### Write file that will be used in scoring scripts
  write_csv(Full_Data, str_glue("DATA_WY1980_WY{WaterYear}_ALLDATA.csv"))
