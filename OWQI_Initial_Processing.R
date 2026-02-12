@@ -479,7 +479,7 @@ stations <- query_stations() %>%
 ExcludedData <- FindFalse %>%
   filter(Exclusion != "Used Primary")
 
-write.xlsx(ExcludedData, str_glue("ExcludedData_{WaterYear}"))
+write.xlsx(ExcludedData, str_glue("ExcludedData_{WaterYear}.xlsx"))
 
 # Create and export file of why data was voided
 ExcludeReason <- Raw_Data %>%
@@ -488,7 +488,16 @@ ExcludeReason <- Raw_Data %>%
          Sample_Fraction, Result_status, Result_Text, Result_Unit, Activity_Comment, 
          Result_Comment, DQL, QualifierAbbr, QualifierTxt)
 
-write.xlsx(ExcludeReason, str_glue("VoidedData_{WaterYear}"))
+write.xlsx(ExcludeReason, str_glue("VoidedData_{WaterYear}.xlsx"))
+
+# Create dataframe that shows count of unique sampling dates per monitoring location for WY. (unique filters out dups) 2.12.26 KM
+
+SamplingCount <- Raw_Data %>%
+  distinct(MLocID, SampleStartDate) %>%
+  count(MLocID, name = str_glue("Days_Sampled_{WaterYear}"))
+
+write.xlsx(SamplingCount, str_glue("Days_Sampled_{WaterYear}.xlsx"))
+
 
 # Rename the parameters and count the DQLs for each
 ParamComp <- Raw_Data %>%
