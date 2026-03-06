@@ -441,20 +441,20 @@ stations <- query_stations() %>%
   select(Station, StationDes, OWRD_Basin)
 
 ### Add Station Description and Basin Name
- Full_Data <- Combined_Data %>%
-   left_join(stations, by = c("Station")) %>% 
-   #rename('combo_name' = StationDes) %>%               ##This renaming to combo_name was creating issues. StationDes is referenced later in script. This might be older code? KM 1.14.26
-   mutate(Date = as.Date(Date),
-          OWQI_basin = case_when(
-            OWRD_Basin %in% c('Willamette','Columbia River','Sandy','Hood') ~ 'Will_Sand_Hood',
-            OWRD_Basin %in% c('Mid Coast', 'South Coast', 'North Coast') ~ 'Coast Range',
-            OWRD_Basin %in% c('Umatilla', 'Grande Ronde', 'John Day') ~ 'JD_Umat_GR_Crook',
-            OWRD_Basin %in% c('Malheur', 'Powder', 'Owyhee', 'Goose & Summer Lakes', 'Malheur Lake') ~ 'Pow_Bur_Mal_Owy',
-            OWRD_Basin == 'Deschutes' & str_detect(StationDes, 'Crooked River') ~ 'JD_Umat_GR_Crook',
-            TRUE ~ OWRD_Basin)
-          ) %>%
-   select(-OWRD_Basin) %>%
-   relocate(c(StationDes, OWQI_basin), .before = Date) 
+Full_Data <- Combined_Data %>%
+  left_join(stations, by = c("Station")) %>% 
+  rename('combo_name' = StationDes) %>%               
+  mutate(Date = as.Date(Date),
+         OWQI_basin = case_when(
+           OWRD_Basin %in% c('Willamette','Columbia River','Sandy','Hood') ~ 'Will_Sand_Hood',
+           OWRD_Basin %in% c('Mid Coast', 'South Coast', 'North Coast') ~ 'Coast Range',
+           OWRD_Basin %in% c('Umatilla', 'Grande Ronde', 'John Day') ~ 'JD_Umat_GR_Crook',
+           OWRD_Basin %in% c('Malheur', 'Powder', 'Owyhee', 'Goose & Summer Lakes', 'Malheur Lake') ~ 'Pow_Bur_Mal_Owy',
+           OWRD_Basin == 'Deschutes' & str_detect(combo_name, 'Crooked River') ~ 'JD_Umat_GR_Crook',
+           TRUE ~ OWRD_Basin)
+         ) %>%
+  select(-OWRD_Basin) %>%
+  relocate(c(combo_name, OWQI_basin), .before = Date) 
  
  # Remove -ORDEQ suffix after combining with stations, if needed
  ## Full_Data$Station <- sub("-ORDEQ$", "", Combined_Data$Station)
