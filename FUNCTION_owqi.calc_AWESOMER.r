@@ -27,6 +27,9 @@ selectClosestToMidpoint <- function(x){
 }
 
 source('FUNCTION_seaKen.wZ.R')
+# source("C:/Users/dbrown/OneDrive - Oregon/Documents/OWQI_InitialReview/FUNCTION_seaKen.wZ_test.r") # added 4/22/26
+# params <- c("temp", "d_o", "do_sat", "bod", "ph", "nh3", "no2", "p", "ecoli") # added 4/22/26
+# results <- seaKen.wZ_test(chem, params) # added 4/22/26
 
 owqi.calc<-function(data, min.d, max.d, WY, End.YR){ 
         
