@@ -74,6 +74,7 @@ require(lubridate);  require(wql)  # lubridate has 'year' and wq has 'years'.
 
 require(Hmisc)
 #require(xlsx)
+require(tidyverse) # Added 4/22/26
 require(plyr)
 require(reshape2)
 require(ggplot2)
